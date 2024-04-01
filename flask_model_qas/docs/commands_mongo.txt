@@ -1,0 +1,35 @@
+install mongo(from chrome)
+install pymoongo(pip install pymongo)
+
+create a folder in C drive name data
+in the folder data create a folder name db
+
+add environment variables->System variables of the path (C:\Program Files\MongoDb\4.4\bin)
+
+check if installed by typing mongo in cmd
+
+ctrl+C to exit.
+
+run table_list.py
+
+and then in mongo shell type mongo
+
+>use myproject
+>show collections
+>db.Item_Description.renameCollection("Item Description")
+>db.Discount_Amount.renameCollection("Discount Amount")
+>db.HSN_SAC_Code.renameCollection("HSN/SAC Code")
+>db.Discount_pc.renameCollection("Discount %")
+>db.Tax_Amount.renameCollection("Tax Amount")
+>db.Tax_Description.renameCollection("Tax Description")
+>db.Tax_pc.renameCollection("Tax %")
+
+
+To check if these are update 
+run
+
+>show collections
+
+then run python file mg_dict.py
+
+

@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+{% block ourpage %}
+
+<div class="card">
+   <div class="card-body">
+      <h1 class="font-weight-bold text-center"> {{text}} </h1>
+      <br>
+      <br>
+      <h4 class="card-title ml-4">Sorry, we could not process your request. Please check if there is an error in the following:</h4>
+      <ol class="text-justify">
+         <li> If your file is corrupt.</li>
+         <li> If you have not specified correct range for extraction.</li>
+         <li> If your server is offline.</li>
+         <li> If the PDF/Image does not contains handwritten content.</li>
+      </ol>
+
+	   <a href="/"><button class="warrning" style="background-color:black; color:white;">Go Back Home</button></a>
+   </div>
+</div>
+<br>
+<br><br><br><br><br><br><br><br>
+
+
+
+
+
+
+{% endblock %}

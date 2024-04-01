@@ -1,0 +1,2329 @@
+{% extends 'layout.html' %}
+{% block ourpage %}
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
+
+
+
+
+<!-- -----------------------------Info Section of the input pdf------------------------------------------------------------  -->
+<div class="jumbotron">
+    <div class="container">
+        <div class="card-group center">
+
+            <!-- ------------------------------------Card giving infor for the total number of pages in the file------------------------------- -->
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card" id="info-card" style="max-width: 18rem;">
+                    <div class="card-content">
+
+                        <div class="card-body">
+                            <div class="media d-flex">
+                                <div class="align-self-center">
+                                    <i class="fas fa-file" style="font-size:48px"></i>
+
+                                </div>
+
+                                <div class="media-body text-right">
+                                    <h3>{{no_of_pages}}</h3>
+                                    <span>Total Pages in File</span>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- -----------------------------------------Card for info related to nuber o pages selected for extraction------------------------------ -->
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card" id="info-card1" style="max-width: 18rem;">
+                    <div class="card-content">
+
+                        <div class="card-body">
+                            <div class="media d-flex">
+                                <div class="align-self-center">
+                                    <i class="far fa-check-square" style="font-size:48px"></i>
+
+                                </div>
+
+                                <div class="media-body text-right">
+                                    <h3>{{selected_pages}}</h3>
+                                    <span>Total Pages Selected</span>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ---------------------------------------------Card for info related to number of tables detected------------------------------------------------- -->
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card" id="info-card2" style="max-width: 18rem;">
+                    <div class="card-content">
+
+                        <div class="card-body">
+                            <div class="media d-flex">
+                                <div class="align-self-center">
+                                    <i class="fas fa-table" style="font-size:48px"></i>
+
+                                </div>
+
+                                <div class="media-body text-right">
+                                    <h3>{{len}}</h3>
+                                    <span>Table(s) Detected</span>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ------------------------------------------------------------------Card for info of file type extension-------------------------------------------------------- -->
+            <div class="col-xl-3 col-sm-6 col-12">
+                <div class="card" id="info-card3" style="max-width: 18rem;">
+                    <div class="card-content">
+
+                        <div class="card-body">
+                            <div class="media d-flex">
+                                <div class="align-self-center">
+                                    {% if file_ext == 'PDF' %}
+                                    <i class="fas fa-file-pdf" style="font-size:48px"></i>
+                                    {% elif file_ext == 'JPG' or 'JPEG' %}
+                                    <i class="fas fa-file-image" style="font-size:48px"></i>
+                                    {% endif %}
+
+                                </div>
+
+                                <div class="media-body text-right">
+                                    <h3>{{file_ext}}</h3>
+                                    <span>File Type</span>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <br>
+        <br>
+
+        <p id="pagelist" hidden>{{ pagelist }}</p>
+        <p id="checksum" hidden>{{ checksum }}</p>
+        <p id="structure_type" hidden>{{ structure_type}}</p>
+        <p id = "language" hidden>{{ language }}</p>
+
+
+        <!-- ------------------------------------------------------------ Header Details-----------------------------------------------------------------------------  -->
+        <caption><center><h2>Vendor Details</h2></center></caption>
+        <div class="table-responsive" style="overflow:scroll; height: 200px;">
+            
+            <table id="header_example" class="table table-striped table-bordered" style="width:100%;">
+                
+                <!-- <captions>Page No {{ page_number }} of {{ name }}</captions> -->
+                <thead class="thead-dark">
+
+                    <tr>
+
+                        
+
+
+                        {% for col in header_columns %}
+                        <th style="position: sticky; top: 0;"><div contenteditable="true" id="col_id">{{ col }}</div></th>
+
+                        {% endfor %}
+
+                    </tr>
+
+                </thead>
+
+                <tbody id='header_table_body' class="changeable_table_body" style="overflow-y: scroll; height: 100%;">
+                    {% for row in header_values %}
+
+
+
+
+
+
+                    <tr>
+
+                      
+
+                        {% for col, row_ in zip(header_columns, row) %}
+
+                        <td id="t_body" class="changeable" contenteditable="true">{{ row_ }}</td>
+
+
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+
+        </div>
+        <br>
+        <br>
+
+
+
+
+        <!-- --------------------------------------------display records for single page detection------------------------------- -->
+        <caption><center><h2>Item Details</h2></center></caption>
+
+        <caption>Name of the file</caption>
+        <p id="pdf_file_name">{{ pdf_file_name }}</p>
+        {% if state == 'single' %}
+
+        <!-- error group mesaages of columns -->
+        <div class="error_group">
+            <div id="merge1_0" class="alert alert-success alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>The Column <span id="first_col_0"></span> and Column <span id="second_col_0"></span> is merged. </p>
+                <p>To Unmerge Columns click on the unmerge button</p>
+                <button type="button" class="unmerge_two_columns btn btn-warning mr-1" style="border-radius: 2rem;"
+                    id="unmerge_column_0"><i class="fas fa-plus-circle"></i> Unmerge </button>
+            </div>
+
+            <div id="disp1_0" class="alert alert-danger alert-dismissible fade show" role="alert" style="display:none;">
+                <p>Insert Value greater than 0</p>
+
+
+            </div>
+
+            <div id="disp2_0" class="alert alert-danger alert-dismissible fade show" role="alert" style="display:none;">
+                <p>Column entered does not exist!!</p>
+
+
+            </div>
+
+            <div id="disp_range_0" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>First Column Number Should be less than Second Column Number</p>
+
+
+            </div>
+
+            <div id="disp_adjacent_0" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Both the columns should be adjacent</p>
+
+
+            </div>
+
+
+            <div id="disp3_0" class="alert alert-danger alert-dismissible fade show" role="alert" style="display:none;">
+                <p>Insert value greater than 0!!</p>
+
+            </div>
+
+
+            <div id="disp4_0" class="alert alert-danger alert-dismissible fade show" role="alert" style="display:none;">
+                <p>Column entered does not exist!!</p>
+
+
+            </div>
+
+        </div>
+
+        <!-- Button group for actions related to columns -->
+        <div class="btn-group" style="float: right;">
+
+            <button type="button" class="merge_two_columns btn btn-warning mr-1" id="merge_two_column_0"><i
+                    class="fas fa-object-group"></i> Merge Column</button>
+            <input class="merge_col_number_first mr-3" style="width: 30px;" id="merge_col_number_first_0"></input>
+            <input class="merge_col_number_second mr-3" style="width: 30px;" id="merge_col_number_second_0"></input>
+
+
+            <button type="button" class="add_column_multiple_between btn btn-warning mr-1"
+                id="add_column_multiple_between_0"><i class="fas fa-plus-circle"></i> Add Column After</button>
+            <input type="number" class="col_number mr-3" style="width: 50px;" placeholder="" id="col_number_0"></input>
+
+
+
+            <button type="button" class="delete_column_multiple_between btn btn-warning mr-1"
+                id="delete_column_multiple_between_0"><i class="fas fa-trash-alt"></i> Delete Column
+                Number</button><input class="del_col_number mr-3" style="width: 50px;" placeholder=""
+                id="del_col_number_0" type="number"></input>
+
+
+
+            <button type="button" class="add_column_multiple btn btn-warning mr-1" style="border-radius: 2rem;"
+                id="add_column_multiple_0"><i class="fas fa-plus-circle"></i> Add column</button>
+            <button type="button" class="delete_column_multiple btn btn-warning mr-1" style="border-radius: 2rem;"
+                id="delete_column_multiple_0"><i class="fas fa-trash-alt"></i> Delete Column</button>
+        </div>
+        <br>
+        <br>
+
+
+        <!-- Main table display -->
+
+        <div class="table-responsive" style="overflow:scroll; height: 500px;">
+
+            <table id="example_0" class="table table-striped table-bordered" style="width:100%;">
+                <!-- <captions>Page No {{ page_number }} of {{ name }}</captions> -->
+                <thead class="thead-dark" style="position: sticky; top: 0;">
+
+                    <tr>
+
+                        <th style="position: sticky; top: 0;">
+                            Sr.No
+                        </th>
+
+
+                        {% for col in column_names %}
+                        <th style="position: sticky; top: 0;">
+                            <div contenteditable="true" id="col_id">{{ loop.index }}</div>
+                        </th>
+
+                        {% endfor %}
+
+                    </tr>
+
+                </thead>
+
+                <tbody id='table_body_0' class="changeable_table_body" style="overflow-y: scroll; height: 100%;">
+                    {% for row in row_data %}
+
+
+
+
+
+
+                    <tr>
+
+                        <td>{{ loop.index }}</td>
+
+                        {% for col, row_ in zip(column_names, row) %}
+
+                        <td id="t_body" class="changeable" contenteditable="true">{{ row_ }}</td>
+
+
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+
+        </div>
+        <br>
+
+        <!-- Error Group of rows input -->
+
+        <div class="error_group">
+
+            <div class="error_group">
+
+                <div id="merge_row_0" class="alert alert-success alert-dismissible fade show" role="alert"
+                    style="display:none;">
+                    <p>The Row <span id="first_row_0"></span> and Row <span id="second_row_0"></span> is merged. </p>
+                    <p>To Unmerge Rows click on the unmerge button</p>
+                    <button type="button" class="unmerge_two_rows btn btn-warning mr-1" style="border-radius: 2rem;"
+                        id="unmerge_row_0"><i class="fas fa-plus-circle"></i> Unmerge </button>
+                </div>
+
+
+                <div id="row_add1_0" class="alert alert-danger alert-dismissible fade show" role="alert"
+                    style="display:none;">
+                    <p>Insert value greater than 0!!</p>
+
+
+                </div>
+
+
+                <div id="row_add2_0" class="alert alert-danger alert-dismissible fade show" role="alert"
+                    style="display:none;">
+                    <p>Row entered does not exist!!</p>
+
+
+                </div>
+
+
+
+                <div id="row_range_0" class="alert alert-danger alert-dismissible fade show" role="alert"
+                    style="display:none;">
+                    <p>First Row Number Should be less than Second Row Number</p>
+
+
+                </div>
+
+                <div id="row_adjacent_0" class="alert alert-danger alert-dismissible fade show" role="alert"
+                    style="display:none;">
+                    <p>Both the rows should be adjacent</p>
+
+
+                </div>
+
+
+
+
+
+
+                <div id="row_del1_0" class="alert alert-danger alert-dismissible fade show" role="alert"
+                    style="display:none;">
+                    <p>Insert value greater than 0!!</p>
+
+
+                </div>
+
+                <div id="row_del2_0" class="alert alert-danger alert-dismissible fade show" role="alert"
+                    style="display:none;">
+                    <p>Row entered does not exist!!</p>
+
+                </div>
+
+
+
+                <div id="pg_0" class="alert alert-danger alert-dismissible fade show" role="alert"
+                    style="display:none;">
+                    <p>Please insert value greater than 1!!</p>
+
+
+                </div>
+
+            </div>
+
+            <!-- Button group for actions related to rows -->
+            <div class="btn-group" style="float: left;">
+
+                <button type="button" class="add_row_multiple btn btn-warning mr-1" style="border-radius: 2rem;"
+                    id="add_row_multiple_0"><i class="fas fa-plus-circle"></i> Add Row</button>
+                <button type="button" class="delete_row_multiple btn btn-warning mr-3" style="border-radius: 2rem;"
+                    id="delete_row_multiple_0"><i class="fas fa-trash-alt"></i> Delete Row</button>
+
+                <button type="button" class="add_row_multiple_between btn btn-warning mr-1"
+                    id="add_row_multiple_between_0"><i class="fas fa-plus-circle"></i> Add Rows after</button><input
+                    class="add_row_number mr-3" id="add_row_number_0" type="number" style="width: 50px;"></input>
+
+
+                <button type="button" class="delete_row_multiple_between btn btn-warning mr-1"
+                    id="delete_row_multiple_between_0"><i class="fas fa-trash-alt"></i> Delete Row Number</button><input
+                    class="delete_row_number mr-3" id="delete_row_number_0" type="number" style="width: 50px;"></input>
+
+
+                <button type="button" class="merge_two_rows btn btn-warning mr-1" id="merge_two_row_0"><i
+                        class="fas fa-object-group"></i> Merge Row</button>
+                <input class="merge_row_number_first mr-3" style="width: 30px;" id="merge_row_number_first_0"></input>
+                <input class="merge_row_number_second mr-3" style="width: 30px;" id="merge_row_number_second_0"></input>
+
+
+
+
+
+
+            </div>
+            <!-- Button group for actions related to merging of columns -->
+
+
+
+
+
+
+        </div>
+        <br>
+        <br>
+        <p>
+
+            <!-- For export to excel , export to csv -->
+            <center>
+
+                <p id="message" class="alert alert-success alert-dismissible fade show" role="alert"
+                    style="display: none;">
+                    <strong> Your Template is Exported. Please click on Download button</strong>
+                </p>
+
+                <div id="loading" style="display:none;">
+                    <img src="/static/export_loadingimage.gif">
+                    <p class="alert alert-warning alert-dismissible fade show" role="alert"><strong>Please wait while
+                            the
+                            template is
+                            being exported</strong>></p>
+                </div>
+
+                <button class="p-3 mb-2 bg-warning" id="final_download" style="display: none;"><a
+                        href="{{url_for('final_download', file_name = pdf_file_name )}}" style="color: black;"
+                        onclick="down();">Download</a></button>
+
+
+                <button class="export_all_to_template p-3 mb-2 bg-warning" id="download_all_to_template_1">Export to
+                    Template</button>
+
+                    <a href="{{ url_for('import_to_sap',file_name = pdf_file_name )}}" ><button class="p-3 mb-2 bg-warning">Export to SAP</button></a>
+
+
+
+                <button class="p-3 mb-2 bg-warning" onclick="ExportExcel('xlsx','example_0','{{d_name}}','1')">Export to
+                    Excel</button>
+
+                <button class="p-3 mb-2 bg-warning"
+                    onclick="export_multiple_table_as_csv('example_0','{{d_name}}','1');">Export
+                    to CSV</button>
+
+
+            </center>
+
+            <br>
+            <br>
+            <br>
+
+        </p>
+
+        <!-- --------------------------------------------------Display records if the user select to detect all pages------------------------------------ -->
+
+        {% elif state == 'multiple' %}
+
+        {% for i in range(len) %}
+
+        <!-- error group mesaages of columns -->
+
+        <div class="error_group">
+
+
+            <div id="merge1_{{i}}" class="alert alert-success alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>The Column <span id="first_col_{{i}}"></span> and Column <span id="second_col_{{i}}"></span> is
+                    merged.
+                </p>
+                <p>To Unmerge Columns click on the unmerge button</p>
+                <button type="button" class="unmerge_two_columns btn btn-warning mr-1" style="border-radius: 2rem;"
+                    id="unmerge_column_{{i}}"><i class="fas fa-plus-circle"></i> Unmerge </button>
+            </div>
+
+            <div id="disp1_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none; ">
+                <p>Insert Value greater than 0</p>
+
+
+            </div>
+
+            <div id="disp2_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Column entered does not exist!!</p>
+
+
+            </div>
+
+            <div id="disp_range_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>First Column Number Should be less than Second Column Number</p>
+
+
+            </div>
+
+
+            <div id="disp_adjacent_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Both the columns should be adjacent</p>
+
+
+            </div>
+
+
+
+
+
+
+
+
+
+            <div id="disp3_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Insert value greater than 0!!</p>
+
+
+            </div>
+
+
+            <div id="disp4_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Column entered does not exist!!</p>
+
+            </div>
+
+        </div>
+
+        <!-- Button group for actions related to columns -->
+        <div class="btn-group" style="float: right;">
+
+            <button type="button" class="merge_two_columns btn btn-warning mr-1" id="merge_two_column_{{i}}"><i
+                    class="fas fa-object-group"></i> Merge Column</button>
+            <input class="merge_col_number_first mr-3" style="width: 30px;" id="merge_col_number_first_{{i}}"></input>
+            <input class="merge_col_number_second mr-3" style="width: 30px;" id="merge_col_number_second_{{i}}"></input>
+
+            <button type="button" class="add_column_multiple_between btn btn-warning mr-1"
+                id="add_column_multiple_between_{{i}}"><i class="fas fa-plus-circle"></i> Add Column
+                After</button><input type="number" class="col_number mr-3" style="width: 50px;" placeholder=""
+                id="col_number_{{i}}"></input>
+
+            <button type="button" class="delete_column_multiple_between btn btn-warning mr-1"
+                id="delete_column_multiple_between_{{i}}"><i class="fas fa-trash-alt"></i> Delete Column
+                Number</button><input class="del_col_number mr-3" style="width: 50px;" placeholder=""
+                id="del_col_number_{{i}}" type="number"></input>
+
+            <button type="button" class="add_column_multiple btn btn-warning mr-1" style="border-radius: 2rem;"
+                id="add_column_multiple_{{i}}"><i class="fas fa-plus-circle"></i> Add column</button>
+            <button type="button" class="delete_column_multiple btn btn-warning mr-1" style="border-radius: 2rem;"
+                id="delete_column_multiple_{{i}}"><i class="fas fa-trash-alt"></i> Delete Column</button>
+
+
+        </div>
+        <br>
+        <br>
+
+        <!-- Main table display -->
+
+        <div class="table-responsive" style="overflow:scroll;height: 500px;">
+            <table id='example_{{i}}' class="table table-striped table-bordered" style="width: 100%;">
+                <!-- <captions>Page No {{ i+1 }} of {{ name }}</captions> -->
+                <thead class="thead-dark">
+                    <tr>
+
+                        <th style="position: sticky; top: 0;">
+                            Sr.No
+                        </th>
+
+                        {% for col in column_names[i] %}
+                        <th style="position: sticky; top: 0;">
+                            <div contenteditable="true">{{ loop.index }}</div>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody id='table_body_{{i}}' class="changeable_table_body">
+                    {% for row in row_data[i] %}
+
+
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        {% for col, row_ in zip(column_names[i], row) %}
+                        <td contenteditable="true">{{row_}}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <br>
+
+        <!-- Error Group of rows input -->
+        <div class="error_group">
+
+            <div id="merge_row_{{i}}" class="alert alert-success alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>The Row <span id="first_row_{{i}}"></span> and Row <span id="second_row_{{i}}"></span> is merged.
+                </p>
+                <p>To Unmerge Rows click on the unmerge button</p>
+                <button type="button" class="unmerge_two_rows btn btn-warning mr-1" style="border-radius: 2rem;"
+                    id="unmerge_row_{{i}}"><i class="fas fa-plus-circle"></i> Unmerge </button>
+            </div>
+
+
+            <div id="row_add1_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Insert value greater than 0!!</p>
+
+
+            </div>
+
+
+            <div id="row_add2_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Row entered does not exist!!</p>
+
+
+            </div>
+
+
+            <div id="row_range_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>First Row Number Should be less than Second Row Number</p>
+
+
+            </div>
+
+            <div id="row_adjacent_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Both the Rows should be adjacent</p>
+
+
+            </div>
+
+
+
+
+
+            <div id="row_del1_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Insert value greater than 0!!</p>
+
+
+            </div>
+
+            <div id="row_del2_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Row entered does not exist!!</p>
+
+
+            </div>
+
+
+
+            <div id="pg_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Please insert value greater than 1!!</p>
+
+
+            </div>
+
+        </div>
+
+
+        <!-- Button group for actions related to rows -->
+        <div class="btn-group" style="float: left;">
+
+            <button type="button" class="add_row_multiple btn btn-warning mr-1" style="border-radius: 2rem;"
+                id="add_row_multiple_{{i}}"><i class="fas fa-plus-circle"></i> Add Row</button>
+            <button type="button" class="delete_row_multiple btn btn-warning mr-3" style="border-radius: 2rem;"
+                id="delete_row_multiple_{{i}}"><i class="fas fa-trash-alt"></i> Delete Row</button>
+
+            <button type="button" class="add_row_multiple_between btn btn-warning mr-1"
+                id="add_row_multiple_between_{{i}}"><i class="fas fa-plus-circle"></i> Add Rows after</button><input
+                class="add_row_number mr-3" id="add_row_number_{{i}}" type="number" style="width: 50px;"></input>
+
+
+            <button type="button" class="delete_row_multiple_between btn btn-warning mr-1"
+                id="delete_row_multiple_between_{{i}}"><i class="fas fa-trash-alt"></i> Delete Row Number</button><input
+                class="delete_row_number mr-3" id="delete_row_number_{{i}}" type="number" style="width: 50px;"></input>
+
+
+
+
+            <button type="button" class="merge_two_rows btn btn-warning mr-1" id="merge_two_row_{{i}}"><i
+                    class="fas fa-object-group"></i> Merge Row</button>
+            <input class="merge_row_number_first mr-3" style="width: 30px;" id="merge_row_number_first_{{i}}"></input>
+            <input class="merge_row_number_second mr-3" style="width: 30px;" id="merge_row_number_second_{{i}}"></input>
+
+
+
+        </div>
+        <!-- Button group for actions related to merging of columns -->
+
+
+
+
+        <br>
+        <br>
+
+        <p>
+            <!-- For export to excel , export to csv -->
+            <center>
+
+
+                <button class="p-3 mb-2 bg-warning"
+                    onclick="ExportExcel('xlsx','example_{{i}}','{{d_name}}','{{i+1}}')">Export to Excel</button>
+
+                <button class="p-3 mb-2 bg-warning"
+                    onclick="export_multiple_table_as_csv('example_{{i}}','{{d_name}}','{{i+1}}');">Export to
+                    CSV</button>
+
+
+
+            </center>
+
+
+
+
+
+
+
+
+
+        </p>
+
+        <br>
+        <br>
+        <br>
+
+        {% endfor %}
+
+        <center>
+
+
+            <p id="message" class="download_alert alert alert-success alert-dismissible fade show" role="alert"
+                style="display: none;">
+                <strong>Your Template is being Exported. Please click on Download button</strong>
+            </p>
+
+            <div id="loading" style="display:none;">
+                <img src="/static/export_loadingimage.gif">
+                <p class="alert alert-warning alert-dismissible fade show" role="alert"><strong>Please wait while the
+                        template
+                        is
+                        being exported</strong></p>
+            </div>
+
+            <!-- Button for Download and export  -->
+            <button class="p-3 mb-2 bg-warning" id="final_download" style="display: none;"><a
+                    href="{{url_for('final_download',file_name = pdf_file_name)}}" style="color: black;" onclick="down();">Download</a></button>
+
+
+
+
+            <button class="export_all_to_template p-3 mb-2 bg-warning" id="download_all_to_template_{{len}}">Export to
+                Template</button>
+
+
+            <a href="{{ url_for('import_to_sap',file_name = pdf_file_name )}}" ><button class="p-3 mb-2 bg-warning">Export to SAP</button></a>
+
+          
+
+        </center>
+
+        <!-- --------------------------------------------------Display records if the user select to detect pages of a given range------------------------------------ -->
+        {% elif state == 'range' %}
+
+        {% for i in range(len) %}
+
+        <!-- error group mesaages of columns -->
+
+        <div class="error_group">
+
+
+            <div id="merge1_{{i}}" class="alert alert-success alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>The Column <span id="first_col_{{i}}"></span> and Column <span id="second_col_{{i}}"></span> is
+                    merged.
+                </p>
+                <p>To Unmerge Columns click on the unmerge button</p>
+                <button type="button" class="unmerge_two_columns btn btn-warning mr-1" style="border-radius: 2rem;"
+                    id="unmerge_column_{{i}}"><i class="fas fa-plus-circle"></i> Unmerge </button>
+            </div>
+
+            <div id="disp1_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Insert Value greater than 0</p>
+
+
+            </div>
+
+            <div id="disp2_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Column entered does not exist!!</p>
+
+
+            </div>
+
+
+
+
+            <div id="disp_range_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>First Column Number Should be less than Second Column Number</p>
+
+
+            </div>
+
+
+            <div id="disp_adjacent_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Both the columns should be adjacent</p>
+
+
+            </div>
+
+
+            <div id="disp3_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Insert value greater than 0!!</p>
+
+
+            </div>
+
+
+            <div id="disp4_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Column entered does not exist!!</p>
+
+            </div>
+
+        </div>
+
+        <!-- Button group for actions related to columns -->
+        <div class="btn-group" style="float: right;">
+
+
+            <button type="button" class="merge_two_columns btn btn-warning mr-1" id="merge_two_column_{{i}}"><i
+                    class="fas fa-object-group"></i> Merge Column</button>
+            <input class="merge_col_number_first mr-3" style="width: 30px;" id="merge_col_number_first_{{i}}"></input>
+            <input class="merge_col_number_second mr-3" style="width: 30px;" id="merge_col_number_second_{{i}}"></input>
+
+
+            <button type="button" class="add_column_multiple_between btn btn-warning mr-1"
+                id="add_column_multiple_between_{{i}}"><i class="fas fa-plus-circle"></i> Add Column
+                After</button><input type="number" class="col_number mr-3" style="width: 50px;" placeholder=""
+                id="col_number_{{i}}"></input>
+
+            <button type="button" class="delete_column_multiple_between btn btn-warning mr-1"
+                id="delete_column_multiple_between_{{i}}"><i class="fas fa-trash-alt"></i> Delete Column
+                Number</button><input class="del_col_number mr-3" style="width: 50px;" placeholder=""
+                id="del_col_number_{{i}}" type="number"></input>
+
+            <button type="button" class="add_column_multiple btn btn-warning mr-1" style="border-radius: 2rem;"
+                id="add_column_multiple_{{i}}"><i class="fas fa-plus-circle"></i> Add column</button>
+            <button type="button" class="delete_column_multiple btn btn-warning mr-1" style="border-radius: 2rem;"
+                id="delete_column_multiple_{{i}}"><i class="fas fa-trash-alt"></i> Delete Column</button>
+
+
+        </div>
+
+        <br>
+        <br>
+
+
+
+
+
+        <!-- Main table display -->
+        <div class="table-responsive" style="overflow:scroll; height: 500px;">
+
+            <table id='example_{{i}}' class="table table-striped table-bordered" style="width: 100%;">
+                <!-- <captions>Page No {{ start_p + i }} of {{ name }}</captions> -->
+                <thead class="thead-dark">
+                    <tr>
+                        <th style="position: sticky; top: 0;">
+                            Sr.No
+                        </th>
+                        {% for col in column_names[i] %}
+                        <th style="position: sticky; top: 0;">
+                            <div contenteditable="true">{{ loop.index }}</div>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody id='table_body_{{i}}' class="changeable_table_body">
+                    {% for row in row_data[i] %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        {% for col, row_ in zip(column_names[i], row) %}
+                        <td contenteditable="true">{{row_}}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <br>
+        <!-- Error Group of rows input -->
+        <div class="error_group">
+
+            <div id="merge_row_{{i}}" class="alert alert-success alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>The Row <span id="first_row_{{i}}"></span> and Row <span id="second_row_{{i}}"></span> is merged.
+                </p>
+                <p>To Unmerge Rows click on the unmerge button</p>
+                <button type="button" class="unmerge_two_rows btn btn-warning mr-1" style="border-radius: 2rem;"
+                    id="unmerge_row_{{i}}"><i class="fas fa-plus-circle"></i> Unmerge </button>
+            </div>
+
+
+
+            <div id="row_add1_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Insert value greater than 0!!</p>
+
+
+            </div>
+
+
+            <div id="row_add2_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Row entered does not exist!!</p>
+
+
+            </div>
+
+
+
+            <div id="row_range_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>First Row Number Should be less than Second Row Number</p>
+
+
+            </div>
+
+            <div id="row_adjacent_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Both the columns should be adjacent</p>
+
+
+            </div>
+
+
+            <div id="row_del1_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Insert value greater than 0!!</p>
+
+
+            </div>
+
+            <div id="row_del2_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Row entered does not exist!!</p>
+
+
+            </div>
+
+
+
+
+
+
+
+            <div id="pg_{{i}}" class="alert alert-danger alert-dismissible fade show" role="alert"
+                style="display:none;">
+                <p>Please insert value greater than 1!!</p>
+
+
+            </div>
+
+        </div>
+
+
+
+        <!-- Button group for actions related to rows -->
+        <div class="btn-group" style="float: left;">
+
+            <button type="button" class="add_row_multiple btn btn-warning mr-1" style="border-radius: 2rem;"
+                id="add_row_multiple_{{i}}"><i class="fas fa-plus-circle"></i> Add Row</button>
+            <button type="button" class="delete_row_multiple btn btn-warning mr-3" style="border-radius: 2rem;"
+                id="delete_row_multiple_{{i}}"><i class="fas fa-trash-alt"></i> Delete Row</button>
+
+            <button type="button" class="add_row_multiple_between btn btn-warning mr-1"
+                id="add_row_multiple_between_{{i}}"><i class="fas fa-plus-circle"></i> Add Rows after</button><input
+                class="add_row_number mr-3" id="add_row_number_{{i}}" type="number" style="width: 50px;"></input>
+
+
+            <button type="button" class="delete_row_multiple_between btn btn-warning mr-1"
+                id="delete_row_multiple_between_{{i}}"><i class="fas fa-trash-alt"></i> Delete Row Number</button><input
+                class="delete_row_number mr-3" id="delete_row_number_{{i}}" type="number" style="width: 50px;"></input>
+
+            <button type="button" class="merge_two_rows btn btn-warning mr-1" id="merge_two_row_{{i}}"><i
+                    class="fas fa-object-group"></i> Merge Row</button>
+            <input class="merge_row_number_first mr-3" style="width: 30px;" id="merge_row_number_first_{{i}}"></input>
+            <input class="merge_row_number_second mr-3" style="width: 30px;" id="merge_row_number_second_{{i}}"></input>
+
+
+
+        </div>
+
+        <!-- Button group for actions related to merging of columns -->
+
+
+
+        <br>
+
+        <br>
+        <p>
+
+            <!-- For export to excel , export to csv -->
+            <center>
+
+
+
+
+
+                <button class="p-3 mb-2 bg-warning"
+                    onclick="ExportExcel('xlsx','example_{{i}}','{{d_name}}','{{i+1}}')">Export
+                    to Excel</button>
+
+                <button class="p-3 mb-2 bg-warning"
+                    onclick="export_multiple_table_as_csv('example_{{i}}','{{d_name}}','{{i+1}}');">Export to
+                    CSV</button>
+
+
+            </center>
+            <br>
+            <br>
+        </p>
+
+        <br>
+        <br>
+        <br>
+        <br>
+
+        {% endfor %}
+        <!-- Button for Download and export  -->
+
+
+        <p id="message" class="alert alert-successr alert-dismissible fade show" role="alert" style="display: none;">
+            <strong>Your Template is Exported. Please click on Download button</strong>
+        </p>
+
+
+        <div id="loading" style="display:none;">
+            <img src="/static/export_loadingimage.gif">
+            <p class="alert alert-warning alert-dismissible fade show" role="alert"><strong>Please wait while the
+                    template
+                    is
+                    being exported</strong></p>
+        </div>
+
+
+
+        <button class="p-3 mb-2 bg-warning" id="final_download" style="display: none;"><a
+                href="{{url_for('final_download', file_name = pdf_file_name)}}" style="color: black;" onclick="down();">Download</a></button>
+
+
+
+
+        <button class="export_all_to_template p-3 mb-2 bg-warning" id="download_all_to_template_{{len}}">Export to
+            Template</button>
+
+        <a href="{{ url_for('import_to_sap',file_name = pdf_file_name )}}" ><button class="p-3 mb-2 bg-warning">Export to SAP</button></a>
+
+      
+
+
+
+
+
+
+        {% endif %}
+
+
+    </div>
+
+
+
+
+    <!-- ------------------------------------------------------All the Javascript and the Jquery functions-------------------------------------------- -->
+
+    <script>
+
+
+        function down() {
+            $("#message").hide();
+        }
+
+        $(document).ready(function () {
+
+            $('.changeable_table_body').on('input', (e) => {
+                // your code here
+                document.getElementById('final_download').style.display = "none";
+                document.getElementById('message').style.display = "none";
+            });
+
+
+
+            // ------------------------------------------------Action of merge and export----------------------------------------------       
+
+            $(".merge_multiple").click(function (e) {
+                e.preventDefault();
+                document.getElementById('final_download').style.display = "none";
+                // document.getElementById('select_header').style.display = "none";
+
+                var buttonid = this.id;
+                var res = buttonid.split("_");
+                var t_id = res[2]
+
+                let val = "table#example_" + t_id + " tr"
+                let var_count = 0;
+
+                var convertedIntoArray = [];
+                $(val).each(function () {
+                    var col_count = 0;
+
+                    var rowDataArray = [];
+                    var actualData = $(this).find('td');
+                    if (actualData.length > 0) {
+                        actualData.each(function () {
+                            rowDataArray.push($(this).text());
+
+                            if (var_count == 0) {
+                                var sel = "select_header_" + col_count;
+                                var id_sel = document.getElementById(sel);
+                                console.log("ID:", id_sel);
+                                col_count++;
+                            }
+
+                        });
+                        convertedIntoArray.push(rowDataArray);
+
+                    }
+                    var_count++;
+                });
+                var merge_col = "#merge_col_no_" + t_id;
+                var merge_col_no = $(merge_col).val()
+                var whole_data = {
+                    "merge_list": convertedIntoArray,
+                    "merge_col": merge_col_no,
+
+                }
+                var pg_str = "#pg_" + t_id;
+                if (merge_col_no < 2) {
+                    $(pg_str).show();
+                    // $(pg_str).css({ 'color': 'red' });
+                }
+                else {
+                    $(pg_str).hide();
+                    const myJSON = JSON.stringify(whole_data)
+                    console.log(myJSON);
+                    $.ajax({
+                        data: myJSON,
+                        type: 'POST',
+                        url: '/merge_columns',
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (response) {
+                            destroy_body(response, t_id)
+                        }
+                    })
+                }
+            });
+
+
+            /*Start of export all to template*/
+            $(".export_all_to_template").click(function (e) {
+                document.getElementById('loading').style.display = "block";
+                e.preventDefault();
+                var buttonid = this.id;
+                var res = buttonid.split("_");
+                var no_of_tables = parseInt(res[4]);
+                var whole_data = {};
+                var finalArray = [];
+                var pdf_file_name = document.getElementById('pdf_file_name').textContent;
+                var page_list = document.getElementById('pagelist').textContent;
+                var checksum = document.getElementById('checksum').textContent;
+                var structure_type = document.getElementById('structure_type').textContent;
+                var language = document.getElementById('language').textContent;
+                
+                console.log("Page list" , page_list)
+                console.log("Page list Type" , typeof(page_list))
+
+
+                console.log("Checksum" , checksum)
+                console.log("Chcksum Type" , typeof(checksum))
+
+                for (var tab = 0; tab < no_of_tables; tab++) {
+                    // var table = document.getElementsByTagName("table")[tab]; //first table
+                    let val = "table#example_" + tab + " tr"
+                    var myTableArray = [];
+
+                    $(val).each(function () {
+
+                        var arrayOfThisRow = [];
+                        var tableData = $(this).find('td');
+                        if (tableData.length > 0) {
+                            tableData.each(function () { arrayOfThisRow.push($(this).text()); });
+                            myTableArray.push(arrayOfThisRow);
+                        }
+                    });
+                    finalArray.push(myTableArray)
+                }
+
+
+                // For Header Details
+                let header_cols = "table#header_example th"
+                let header_vals = "table#header_example tr"
+
+                var headerTableArray = [];
+                var arrayOfThisHeaderColRow = [];
+
+
+
+
+
+                $(header_cols).each(function () {
+
+                    
+                    // var headerColTableData = $(this).find('td');
+                    // if (headerColTableData.length > 0) {
+                    // header_cols.each(function () { 
+                    arrayOfThisHeaderColRow.push($(this).text());
+                    // headerColTableArray.push(arrayOfThisHeaderColRow);
+                    // }
+                });
+
+
+                headerTableArray.push(arrayOfThisHeaderColRow);
+
+                // console.log(headerTableArray);
+
+
+
+                $(header_vals).each(function () {
+
+                    var arrayOfThisHeaderRow = [];
+                    var headerTableData = $(this).find('td');
+                    if (headerTableData.length > 0) {
+                        headerTableData.each(function () { arrayOfThisHeaderRow.push($(this).text()); });
+                        headerTableArray.push(arrayOfThisHeaderRow);
+                    }
+                });
+
+                // console.log(headerTableArray);
+
+
+
+
+
+
+
+
+
+
+
+                // console.log("Final Array", finalArray);
+
+
+                var whole_data = {
+                    "pdf_file_name": pdf_file_name,
+                    "merge_list": finalArray,
+                    "no_of_tables": no_of_tables,
+                    "header_details" : headerTableArray,
+                    "page_list" : page_list,
+                    "checksum" : checksum,
+                    "structure_type":structure_type,
+                    "language" : language,
+                }
+                const myJSON = JSON.stringify(whole_data)
+                // console.log(myJSON);
+                $.ajax({
+                    data: myJSON,
+                    type: 'POST',
+                    url: '/export_all_to_template',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (response) {
+
+                        if (response == "Done") {
+                            $("#loading").hide();
+                            document.getElementById('final_download').style.display = "block";
+                            $("#message").show();
+
+                        }
+                    }
+                })
+            });
+            /*End of export all to template*/
+
+
+
+            // ----------------------------------------Table Actions of Row and Column--------------------------------------------------------------------
+
+
+
+            //                    **********************************Add Column at end of the table********************************************
+
+            $(".add_column_multiple").click(function (e) {
+                e.preventDefault();
+                document.getElementById('final_download').style.display = "none";
+
+                var btn_add_column_id = this.id;
+                var res = btn_add_column_id.split("_");
+                var t_id = res[3];
+
+                let col_val = "table#example_" + t_id + " thead" + " tr";
+                $(col_val).append("<th>Hello</th>").css("position", "relative");
+
+
+
+
+                var col_cell = "table#example_" + t_id + " thead tr th:last-child";
+                var col_index = $(col_cell).index();
+                $(col_cell).text(col_index);
+
+
+                let col_val_data = "table#example_" + t_id + " tbody tr";
+                $(col_val_data).append("<td></td>").attr("contentEditable", true);
+
+            })
+
+
+            // **************************************************Add Column in between the table*****************************************************
+
+            $(".add_column_multiple_between").click(function (e) {   // access all the ids with the class name in the bracket
+                e.preventDefault();
+                document.getElementById('final_download').style.display = "none";
+
+
+                var btn_add_column_between_id = this.id;         //access the button id
+                var res = btn_add_column_between_id.split("_"); //split ot extract the last number
+                var t_id = res[4];                              //acccess the last number to know the table number with slicing
+
+                // Extract the column number after which the column is Added
+                var col_number = "#col_number_" + t_id;
+
+                var cols = parseInt($(col_number).val());
+                var last_col = $("table thead tr th:last-child").index();
+                var disp1_str = "#disp1_" + t_id;
+                var disp2_str = "#disp2_" + t_id;
+                var disp3_str = "#disp3_" + t_id;
+                var disp4_str = "#disp4_" + t_id;
+                if (cols <= 0) {
+                    $(disp2_str).hide();
+                    $(disp1_str).show();
+                }
+                else if (cols > last_col) {
+                    $(disp1_str).hide();
+                    $(disp2_str).show();
+                    $(disp3_str).hide();
+                    $(disp4_str).hide();
+                }
+                else {
+                    $(disp1_str).hide();
+                    $(disp2_str).hide();
+
+                    // Parse into integer to increment and store it in String
+                    var col_number_value = String(cols + 1);
+
+
+
+
+                    // Create a string such that it will reach to the table header            
+                    var cell_header = "table#example_" + t_id + " thead tr th:nth-child(" + col_number_value + ")";
+
+                    // Add the table header with the help of the after() function
+                    $(cell_header).after('<th>New Header</th>');
+
+
+                    // Create a string such that it will reach to the table data
+                    var cell = "table#example_" + t_id + " tbody tr td:nth-child(" + col_number_value + ")";
+
+                    // Add the table data with the help of the after() function
+                    $(cell).after('<td></td>').attr("contentEditable", true);
+
+                    var table_body_id = "table_body_" + t_id;
+                    var table_body = document.getElementById(table_body_id);
+                    document.getElementById(table_body_id).contentEditable = true;
+
+                    // Access all the table header so that after action you can change the index
+                    var updated_index_header = "table#example_" + t_id + " thead tr th";
+
+                    // Apply for loop in jquery to update the array of column indexes
+                    // index - indicates the i in forloop
+                    // inside the dollar bracket the table element you want to access
+                    // this keyword for accessing the table element
+                    $(updated_index_header).each(function (index) {
+                        console.log($(this).text(index));
+
+                    });
+
+                    // As the first column will always remain Serial Number always keep it update by the below line
+                    $("table thead tr th:first-child").text("Sr.No");
+                }
+
+
+
+
+
+
+            })
+
+
+            //  **********************************************************delete the last column***************************************************************
+
+            $(".delete_column_multiple").click(function (e) {
+                e.preventDefault();
+                document.getElementById('final_download').style.display = "none";
+
+                var btn_add_column_id = this.id;
+                var res = btn_add_column_id.split("_");
+                var t_id = res[3];
+
+                let col_val = "table#example_" + t_id + " thead tr th:last-child";
+                $(col_val).remove();
+
+
+
+                let col_val_data = "table#example_" + t_id + " tbody tr td:last-child";
+                $(col_val_data).remove();
+
+
+            })
+
+
+            // **************************************************************Delete the specific column number******************************************************************
+
+            $(".delete_column_multiple_between").click(function (e) {
+                e.preventDefault();
+                document.getElementById('final_download').style.display = "none";
+
+
+                var btn_add_column_between_id = this.id;
+                var res = btn_add_column_between_id.split("_");
+                var t_id = res[4];
+
+
+                var col_number = "#del_col_number_" + t_id;
+                var cols = parseInt($(col_number).val());
+                var last_col = $("table thead tr th:last-child").index();
+
+                var disp1_str = "#disp1_" + t_id;
+                var disp2_str = "#disp2_" + t_id;
+                var disp3_str = "#disp3_" + t_id;
+                var disp4_str = "#disp4_" + t_id;
+                if (cols <= 0) {
+                    $(disp1_str).hide();
+                    $(disp2_str).hide();
+                    $(disp4_str).hide();
+                    $(disp3_str).show();
+                }
+                else if (cols > last_col) {
+                    $(disp1_str).hide();
+                    $(disp2_str).hide();
+                    $(disp3_str).hide();
+                    $(disp4_str).show();
+                }
+                else {
+                    $(disp1_str).hide();
+                    $(disp2_str).hide();
+                    $(disp3_str).hide();
+                    $(disp4_str).hide();
+                    var col_number_value = String(parseInt($(col_number).val()) + 1);
+
+
+                    var cell_header = "table#example_" + t_id + " thead tr th:nth-child(" + col_number_value + ")";
+                    $(cell_header).remove();
+
+
+                    var cell = "table#example_" + t_id + " tbody tr td:nth-child(" + col_number_value + ")";
+                    $(cell).remove();
+
+
+                    var updated_index_header = "table#example_" + t_id + " thead tr th";
+                    $(updated_index_header).each(function (index) {
+                        $(this).text(index);
+
+                    });
+                    $("table thead tr th:first-child").text("Sr.No");
+
+                }
+
+
+            })
+
+            //  ---------------------------------------------------------Adding last row---------------------------------------------------------------------
+
+
+            $(".add_row_multiple").click(function (e) {
+                e.preventDefault();
+                document.getElementById('final_download').style.display = "none";
+
+                var btn_add_column_id = this.id;
+                var res = btn_add_column_id.split("_");
+                var t_id = res[3];
+
+
+                var last_table_row = "table#example_" + t_id + " tbody tr:last";
+                var table_body = "table#example_" + t_id + " tbody";
+
+                $(last_table_row).clone(true).appendTo(table_body).find("td").empty();
+
+                var indx = $(last_table_row).index() + 1;
+
+                var last_row_first_column = "table#example_" + t_id + " tbody tr:last td:first";
+                $(last_row_first_column).text(indx);
+
+            })
+
+
+
+            //  ---------------------------------------Adding Rows in between----------------------------------------------------
+
+            $(".add_row_multiple_between").click(function (e) {
+
+                document.getElementById('final_download').style.display = "none";
+
+                var btn_add_column_id = this.id;
+                var res = btn_add_column_id.split("_");
+                var t_id = res[4];
+
+                var row_number = "#add_row_number_" + t_id;
+
+                var row_val = parseInt($(row_number).val());
+                var row_val_check = row_val - 1;
+                console.log(row_val_check);
+                console.log(row_val);
+                var last_table_row = "table#example_" + t_id + " tbody tr:last";
+                var last_row = String(parseInt($(last_table_row).index()) + 1);
+                console.log(last_row);
+                // last_row = last_row + 1;
+                var row_add1_str = "#row_add1_" + t_id;
+                var row_add2_str = "#row_add2_" + t_id;
+
+
+                if (row_val <= 0) {
+                    $(row_add2_str).hide();
+                    $(row_add1_str).show();
+                }
+
+                else if (row_val_check > last_row) {
+                    $(row_add1_str).hide();
+                    $(row_add2_str).show();
+                }
+                else if (row_val == last_row) {
+
+                    var last_table_row = "table#example_" + t_id + " tbody tr:last";
+                    var table_body = "table#example_" + t_id + " tbody";
+
+                    $(last_table_row).clone(true).appendTo(table_body).find("td").empty();
+
+                    var indx = $(last_table_row).index() + 1;
+
+                    var last_row_first_column = "table#example_" + t_id + " tbody tr:last td:first";
+                    $(last_row_first_column).text(indx);
+
+
+                }
+
+                else {
+                    $(row_add1_str).hide();
+                    $(row_add2_str).hide();
+                    var row_number_value = String(row_val);
+                    var table_row = "table#example_" + t_id + " tbody tr:eq(" + row_number_value + ")";
+                    // console.log($(table_row).text());
+                    $(table_row).after($(table_row).clone()).find("td").empty();
+
+
+                    var updated_index = "table#example_" + t_id + " tbody tr";
+                    $(updated_index).each(function (index) {
+                        update_idx = String(parseInt(index) + 1);
+                        $(this).find("td:first").text(update_idx);
+
+                    });
+                }
+
+            })
+
+
+            //  -------------------------------------------------Delete Last Row---------------------------------------------------
+
+
+            $(".delete_row_multiple").click(function (e) {
+                e.preventDefault();
+
+
+                document.getElementById('final_download').style.display = "none";
+
+                var btn_add_column_id = this.id;
+                var res = btn_add_column_id.split("_");
+                var t_id = res[3];
+
+                var last_table_row = "table#example_" + t_id + " tbody tr:last";
+                $(last_table_row).remove();
+
+            })
+
+
+            // ----------------------------------------------------------------Delete Row from between------------------------------------------
+
+
+            $(".delete_row_multiple_between").click(function (e) {
+
+                e.preventDefault();
+
+
+                document.getElementById('final_download').style.display = "none";
+
+                var btn_add_column_id = this.id;
+                var res = btn_add_column_id.split("_");
+                var t_id = res[4];
+
+                var row_number = "#delete_row_number_" + t_id;
+                var row_val_check = String(parseInt($(row_number).val()));
+                var row_val = String(parseInt($(row_number).val() - 1));
+                var last_table_row = "table#example_" + t_id + " tbody tr:last";
+                var last_row = parseInt($(last_table_row).text());
+
+                var row_del1_str = "#row_del1_" + t_id;
+                var row_del2_str = "#row_del2_" + t_id;
+
+                if (row_val_check <= 0) {
+                    $(row_del2_str).hide();
+                    $(row_del1_str).show();
+                }
+                else if (row_val_check > last_row) {
+                    $(row_del1_str).hide();
+                    $(row_del2_str).show();
+                }
+
+                else {
+                    $(row_del1_str).hide();
+                    $(row_del2_str).hide();
+                    var row_number_value = String(parseInt($(row_number).val() - 1));
+                    var table_row = "table#example_" + t_id + " tbody tr:eq(" + row_number_value + ")";
+                    $(table_row).remove();
+                    var updated_index = "table#example_" + t_id + " tbody tr";
+                    $(updated_index).each(function (index) {
+                        update_idx = String(parseInt(index) + 1);
+                        $(this).find("td:first").text(update_idx);
+
+                    });
+                }
+
+            })
+
+            // --------------------------------------------------------Merge Two Columns-------------------------------------------------------
+
+
+            $(".merge_two_columns").click(function (e) {
+
+                // General Sep Refer above documentation
+                e.preventDefault();
+                document.getElementById('final_download').style.display = "none";
+                var btn_add_column_id = this.id;
+                var res = btn_add_column_id.split("_");
+                var t_id = res[3];
+
+
+                var disp1_str = "#disp1_" + t_id;             // Value should be greater than zero
+                var disp2_str = "#disp2_" + t_id;             // Inserted value Does not exist
+                var disp3_str = "#disp3_" + t_id;             // Value should be greater than zero
+                var disp4_str = "#disp4_" + t_id;             // insert value does not exist
+                var disp_range = "#disp_range_" + t_id;       // The range is not perfect
+                var disp_adjacent = "#disp_adjacent_" + t_id; // Numbers should be adjacent
+
+                // input the number of first column
+                var first_col = "#merge_col_number_first_" + t_id;
+                var first_col_number = String(parseInt($(first_col).val()));
+
+
+                // Modifying the first input to +1 to match with table index
+                var mod_col_first = String(parseInt(first_col_number) + 1);
+
+                // input the number of second column
+                var second_col = "#merge_col_number_second_" + t_id;
+                var second_col_number = String(parseInt($(second_col).val()));
+
+                var last_col_index = "table#example_" + t_id + " thead tr th:last-child";
+                var last_col_index_val = parseInt($(last_col_index).text());
+                console.log(last_col_index_val);
+
+                var mod_col_second = String(parseInt(second_col_number) + 1);
+
+
+                if (first_col_number == 0 || second_col_number == 0 || first_col_number < 0 || second_col_number < 0) {
+                    // display the zero error
+                    $(disp1_str).show();
+                    $(disp2_str).hide();
+                    $(disp3_str).hide();
+                    $(disp4_str).hide();
+                    $(disp_range).hide();
+                    $(disp_adjacent).hide();
+
+
+                }
+                else if (parseInt(first_col_number) >= parseInt(second_col_number)) {
+
+                    // Display the range error
+                    $(disp1_str).hide();
+                    $(disp2_str).hide();
+                    $(disp3_str).hide();
+                    $(disp4_str).hide();
+                    $(disp_range).show();
+                    $(disp_adjacent).hide();
+
+
+
+                }
+                else if (parseInt(second_col_number) != parseInt(first_col_number) + 1) {
+
+                    // Display the adjacent numbers error
+
+                    $(disp1_str).hide();
+                    $(disp2_str).hide();
+                    $(disp3_str).hide();
+                    $(disp4_str).hide();
+                    $(disp_range).hide();
+                    $(disp_adjacent).show();
+                }
+
+                else if (first_col_number > last_col_index_val || second_col_number > last_col_index) {
+
+                    // Insert value does not exist
+                    $(disp1_str).hide();
+                    $(disp2_str).show();
+                    $(disp3_str).hide();
+                    $(disp4_str).hide();
+                    $(disp_range).hide();
+                    $(disp_adjacent).hide();
+
+                }
+                else {
+
+                    // if the function works hide all the errors. 
+                    $(disp1_str).hide();
+                    $(disp2_str).hide();
+                    $(disp3_str).hide();
+                    $(disp4_str).hide();
+                    $(disp_range).hide();
+                    $(disp_adjacent).hide();
+
+
+
+
+                    // Modifying the second input to +1 to match with table index
+
+
+                    // extractting both the ids of column dynamically
+                    var table_col_first = "table#example_" + t_id + " td:nth-child(" + mod_col_first + ")";
+                    var table_col_second = "table#example_" + t_id + " td:nth-child(" + mod_col_second + ")";
+
+                    // Extracting data of first column and storing into array
+                    var col_first_array = $(table_col_first).map(function () {
+                        return $(this).text();
+                    }).get();
+
+
+                    // Extracting data of second column and storing into anoter array
+                    var col_second_array = $(table_col_second).map(function () {
+                        return $(this).text();
+                    }).get();
+
+
+                    // Merging both the arrays and creating a single merged array for eg:(['Ram','Sita'] ['Leela','Geeta'] => ['Ram Leela' , 'Seeta Geeta'])
+                    var merge_array = []
+                    for (var i = 0; i < col_first_array.length; i++) {
+                        merge_array.push(col_first_array[i] + "  " + col_second_array[i])
+                    }
+
+
+                    // Transfering the merged array values into a new column
+                    $(table_col_first).each(function (i) {
+                        $(this).text(merge_array[i]);
+                    })
+
+                    // Deletig the other column because it will repeat other wise
+                    $(table_col_second).remove();
+
+
+                    // Update Formalities of updating header indexes and serial no label
+                    var updated_index_header = "table#example_" + t_id + " thead tr th";
+                    $(updated_index_header).each(function (index) {
+                        $(this).text(index);
+
+                    });
+
+                    var updated_index_header_first = "table#example_" + t_id + " thead tr th:first-child";
+                    var updated_index_header_second = "table#example_" + t_id + " thead tr th:last-child";
+                    $(updated_index_header_first).text("Sr.No");
+
+
+                    // you have to remove the second column which is merged 
+                    $(updated_index_header_second).remove();
+
+
+                    var first_col_alert = "#first_col_" + t_id;
+                    $(first_col_alert).text(first_col_number);
+
+                    var second_col_alert = "#second_col_" + t_id;
+                    $(second_col_alert).text(second_col_number);
+
+
+                    var merge_alert = "#merge1_" + t_id;
+                    $(merge_alert).show();
+
+                }
+
+
+
+            })
+
+            // ------------------------------------------------Unmerge Two Columns----------------------------------------------------------
+
+            $(".unmerge_two_columns").click(function (e) {
+                e.preventDefault();
+                document.getElementById('final_download').style.display = "none";
+                var btn_add_column_id = this.id;
+                var res = btn_add_column_id.split("_");
+                var t_id = res[2];
+
+                // Extracting which two columns were extracted from the alert paragraph tag
+
+
+                // Extracting the first column
+                var f_col = "#first_col_" + t_id;
+
+                // Extrcating the second column
+                var s_col = "#second_col_" + t_id;
+
+
+                var f = $(f_col).text();
+                var s = $(s_col).text();
+
+                // Increasing one value because index is +1
+                var mod_f = String(parseInt(f) + 1);
+                var mod_s = String(parseInt(s) + 1);
+
+
+                // Extracting all the values of the merged columns
+                var table_merged = "table#example_" + t_id + " td:nth-child(" + mod_f + ")";
+                var merged_table_array = $(table_merged).map(function () {
+                    return $(this).text();
+                }).get();
+
+                // Splitting the columns on basis of the space (which was used to split)
+                var newArray = merged_table_array.map(function (i) {
+                    return i.split('  ');
+                });
+
+                // Creating two arrays so that after splitting it will convert into two set of values
+                var arr1 = []
+                var arr2 = []
+
+                // filling one array with the modified merged columns 
+                for (var j = 0; j < newArray.length; j++) {
+
+                    arr2.push(newArray[j][1]);
+                }
+
+                // filling another array with the new column which was created after splitting
+                for (var k = 0; k < newArray.length; k++) {
+
+                    arr1.push(newArray[k][0]);
+                }
+
+
+                // from the first array put all the values in the first column of the table which was merged before splitting 
+                $(table_merged).each(function (i) {
+                    $(this).text(arr1[i]);
+                })
+
+
+                // to put the other splitted arrays we need to create a new column and column header and then the second array value will be filled in the column 
+                //  of the table.
+
+
+                // extrcat the column index where the new column is to be inserted.
+                var mod_s_insert = String(parseInt(mod_s) - 1);
+
+                // Create a cell header with that index first.
+                var cell_header = "table#example_" + t_id + " thead tr th:nth-child(" + mod_s_insert + ")";
+                $(cell_header).after('<th>New Header</th>');
+
+                // Now create a whole new column with the blank values
+                var cell = "table#example_" + t_id + " tbody tr td:nth-child(" + mod_s_insert + ")";
+                $(cell).after('<td></td>').attr("contentEditable", true);
+
+                // once the new columns is created you have to fill all the values of the second array which got splitted.
+                var after_split = "table#example_" + t_id + " td:nth-child(" + mod_s + ")";
+                $(after_split).each(function (i) {
+                    $(this).text(arr2[i]);
+                })
+
+
+                // once the new column is filled make sure you are making all the content editable and updating the header index as there are high chances that the index will be updated 
+                var table_body_id = "table_body_" + t_id;
+                var table_body = document.getElementById(table_body_id);
+                document.getElementById(table_body_id).contentEditable = true;
+
+
+                var updated_index_header = "table#example_" + t_id + " thead tr th";
+                $(updated_index_header).each(function (index) {
+                    console.log($(this).text(index));
+
+                });
+
+
+                $("table thead tr th:first-child").text("Sr.No");
+
+                // Make sure your the alert message is hidden after the the unmerge is successfull.
+                var merge_alert = "#merge1_" + t_id;
+                $(merge_alert).hide();
+
+
+
+
+
+
+            })
+
+
+
+            // --------------------------------------------Merge two rows----------------------------------------
+
+
+            $(".merge_two_rows").click(function (e) {
+                e.preventDefault();
+                document.getElementById('final_download').style.display = "none";
+                var btn_add_column_id = this.id;
+                var res = btn_add_column_id.split("_");
+                var t_id = res[3];
+
+
+                var row_add1_str = "#row_add1_" + t_id; // Insert Value greater than 0!!
+                var row_add2_str = "#row_add2_" + t_id; // Row Entered Does Not Exist
+                var row_del1_str = "#row_del1_" + t_id; // Insert Value Greater than 0!!
+                var row_del2_str = "#row_del2_" + t_id; //Row Entered Does not Exist
+                var row_range_str = "#row_range_" + t_id; // First Row Number should be less than second Row header
+                var row_adjacent_str = "#row_adjacent_" + t_id; //Both the row should be adjacent
+
+
+                // Take the first row number from the user
+                var first_row = "#merge_row_number_first_" + t_id;
+                var first_row_number = String(parseInt($(first_row).val()));
+
+                // Modify the number as te index is greater by 1 number.
+                var mod_row_first = String(parseInt(first_row_number) - 1);
+
+
+                // Take the second row number as an input from the user
+                var second_row = "#merge_row_number_second_" + t_id;
+                var second_row_number = String(parseInt($(second_row).val()));
+
+
+                var mod_row_second = String(parseInt(second_row_number) - 1);
+
+                // Extract the last row value and index for validation 
+                var last_row = "table#example_" + t_id + " tbody tr:last";
+                var last_row_index_val = parseInt($(last_row).text());
+
+                if (first_row_number == 0 || second_row_number == 0 || first_row_number < 0 || second_row_number < 0) {
+                    $(row_add1_str).show();
+                    $(row_add2_str).hide();
+                    $(row_del1_str).hide();
+                    $(row_del2_str).hide();
+                    $(row_range_str).hide();
+                    $(row_adjacent_str).hide();
+                }
+
+                else if (parseInt(first_row_number) > parseInt(second_row_number)) {
+                    $(row_add1_str).hide();
+                    $(row_add2_str).hide();
+                    $(row_del1_str).hide();
+                    $(row_del2_str).hide();
+                    $(row_range_str).show();
+                    $(row_adjacent_str).hide();
+
+                }
+
+                else if (parseInt(second_row_number) != parseInt(first_row_number) + 1) {
+
+                    $(row_add1_str).hide();
+                    $(row_add2_str).hide();
+                    $(row_del1_str).hide();
+                    $(row_del2_str).hide();
+                    $(row_range_str).hide();
+                    $(row_adjacent_str).show();
+                }
+
+
+                else if (first_row_number > last_row_index_val || second_row_number > last_row_index_val) {
+
+                    $(row_add1_str).hide();
+                    $(row_add2_str).show();
+                    $(row_del1_str).hide();
+                    $(row_del2_str).hide();
+                    $(row_range_str).hide();
+                    $(row_adjacent_str).hide();
+
+                }
+
+
+
+                else {
+
+                    $(row_add1_str).hide();
+                    $(row_add2_str).hide();
+                    $(row_del1_str).hide();
+                    $(row_del2_str).hide();
+                    $(row_range_str).hide();
+                    $(row_adjacent_str).hide();
+
+
+
+
+
+
+
+
+
+
+                    // console.log($("table tbody tr:eq(1)").text());
+
+                    var table_row_first = "table#example_" + t_id + " tbody tr:eq(" + mod_row_first + ")";
+                    var table_row_second = "table#example_" + t_id + " tbody tr:eq(" + mod_row_second + ")";
+
+                    // Extract the two rows values from the row and save it in a particular array
+                    var row_first_array = $(table_row_first).find('td').map(function () {
+                        return $.trim($(this).text());
+                    }).get();
+
+                    var row_second_array = $(table_row_second).find('td').map(function () {
+                        return $.trim($(this).text());
+
+                    }).get();
+
+
+                    // Merge both the arrays and save them in another array.    
+                    var merge_array = [];
+                    for (var i = 0; i < row_first_array.length; i++) {
+                        merge_array.push(row_first_array[i] + "  " + row_second_array[i])
+                    }
+
+
+                    // Update the first column with te merged array values
+                    $(table_row_first).find('td').each(function (i) {
+                        $(this).text(merge_array[i]);
+                    })
+
+                    // you are suppose to the remove the second row values as the values have been shifted.
+                    $(table_row_second).remove();
+
+
+                    // its time to update all the index as the inde will surely change as your going to remove rows from between
+                    var updated_index = "table#example_" + t_id + " tbody tr";
+                    $(updated_index).each(function (index) {
+                        update_idx = String(parseInt(index) + 1);
+                        $(this).find("td:first").text(update_idx);
+
+                    });
+
+
+                    // Give the alert message that the rowa are successfully merge and also mention which two rows you have mentioned so that while unmerge the function has the acces of the previous merged rows.
+
+                    var first_row_alert = "#first_row_" + t_id;
+                    $(first_row_alert).text(first_row_number);
+
+                    var second_row_alert = "#second_row_" + t_id;
+                    $(second_row_alert).text(second_row_number);
+
+                    var merge_alert = "#merge_row_" + t_id;
+                    $(merge_alert).show();
+
+                }
+
+            })
+
+
+
+
+            // -----------------------------------Unmerge two Rows----------------------------------
+
+
+            // For detailed explanation refer the unmerge two columns comments. 
+
+            $(".unmerge_two_rows").click(function (e) {
+                e.preventDefault();
+                document.getElementById('final_download').style.display = "none";
+                var btn_add_column_id = this.id;
+                var res = btn_add_column_id.split("_");
+                var t_id = res[2];
+
+                var f_row = "#first_row_" + t_id;
+                var s_row = "#second_row_" + t_id;
+
+                var f = $(f_row).text();
+                var s = $(s_row).text();
+
+                var mod_f = String(parseInt(f) - 1);
+                var mod_s = String(parseInt(s) - 1);
+
+                var last_row = "table#example_" + t_id + " tbody tr:last";
+                var last_row_val = $(last_row).index();
+
+                var table_merged = "table#example_" + t_id + " tbody tr:eq(" + mod_f + ")";
+
+                var merged_table_array = $(table_merged).find('td').map(function () {
+                    return $.trim($(this).text());
+
+                }).get();
+
+                var newArray = merged_table_array.map(function (i) {
+                    return i.split('  ');
+                });
+
+
+                var arr1 = []
+                var arr2 = []
+
+                for (var j = 0; j < newArray.length; j++) {
+
+                    arr2.push(newArray[j][1]);
+                }
+
+                for (var k = 0; k < newArray.length; k++) {
+
+                    arr1.push(newArray[k][0]);
+                }
+
+
+
+
+                $(table_merged).find('td').each(function (i) {
+                    $(this).text(arr1[i]);
+                })
+
+                // console.log(mod_s);
+                // console.log(last_row_val)
+
+                if (parseInt(mod_s) == last_row_val + 1) {
+                    var table_body = "table#example_" + t_id + " tbody";
+                    $(last_row).clone(true).appendTo(table_body).find("td").empty();
+
+                    var new_last_row = "table#example_" + t_id + " tbody tr:last";
+                    $(new_last_row).find('td').each(function (i) {
+                        $(this).text(arr2[i]);
+                    })
+
+                    var indx = $(last_row).index() + 1;
+                    var last_row_first_column = "table#example_" + t_id + " tbody tr:last td:first";
+                    $(last_row_first_column).text(indx);
+
+
+
+                }
+                else {
+
+                    var table_row = "table#example_" + t_id + " tbody tr:eq(" + mod_s + ")";
+                    $(table_row).after($(table_row).clone()).find("td").empty();
+
+
+                    var updated_index = "table#example_" + t_id + " tbody tr";
+                    $(updated_index).each(function (index) {
+                        update_idx = String(parseInt(index) + 1);
+                        $(this).find("td:first").text(update_idx);
+
+                    });
+
+                    $(table_row).find('td').each(function (i) {
+                        $(this).text(arr2[i]);
+                    })
+                }
+
+
+
+
+
+            })
+
+
+
+
+
+
+
+
+
+        });
+
+
+
+
+
+        // ------------------------------------------------Destroying body-----------------------------------------------------------
+
+        function destroy_body(response, t_id) {
+            var table_body_id = "table_body_" + t_id;
+            var table_body = document.getElementById(table_body_id);
+            // console.log(table_body)
+            while (table_body.firstChild) {
+                table_body.removeChild(table_body.firstChild);
+            }
+
+            for (let i = 0; i < response.length; i++) {
+                var row = document.createElement("tr")
+                table_body.appendChild(row)
+                for (let j = 0; j < response[0].length; j++) {
+                    var cell = document.createElement("td")
+                    cell.innerHTML = response[i][j];
+                    row.appendChild(cell);
+                }
+            }
+
+            document.getElementById(table_body_id).contentEditable = true;
+
+
+            var val = '#example_' + t_id + ' th:last-child';
+            $(val).remove();
+
+        }
+
+        // ----------------------------Data Tale Call---------------------------------------------------------
+
+
+
+
+
+
+
+
+        function export_multiple_table_as_csv(table_id, filename, table_no, separator = ',') {
+
+            var rows = document.querySelectorAll('table#' + table_id + ' tr');
+
+            var csv = [];
+            for (var i = 0; i < rows.length; i++) {
+                var row = [], cols = rows[i].querySelectorAll('td, th');
+                for (var j = 0; j < cols.length; j++) {
+
+                    var data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s)/gm, ' ')
+
+                    data = data.replace(/"/g, '""');
+
+                    row.push('"' + data + '"');
+                }
+                csv.push(row.join(separator));
+            }
+            var csv_string = csv.join('\n');
+            // Download it
+            var filename = filename + "-" + table_no + '.csv';
+            var link = document.createElement('a');
+            link.style.display = 'none';
+            link.setAttribute('target', '_blank');
+            link.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv_string));
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function ExportExcel(type, table_id, filename, table_no, fn, dl) {
+            var elt = document.getElementById(table_id);
+            var wb = XLSX.utils.table_to_book(elt, { sheet: "Records" });
+            return dl ?
+                XLSX.write(wb, { bookType: type, bookSST: true, type: 'base64' }) :
+                XLSX.writeFile(wb, fn || (filename + "-" + table_no + "." + (type || 'xlsx')));
+        }
+
+
+
+
+    </script>
+
+</div>
+
+    {% endblock %}

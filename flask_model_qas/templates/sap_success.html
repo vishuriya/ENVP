@@ -1,0 +1,35 @@
+{% extends 'layout.html' %}
+{% block ourpage %}
+
+<div class="card">
+   <div class="card-body">
+      <h1 class="font-weight-bold text-center"> Congratulations <i class="fa fa-check" aria-hidden="true" style="color: green;"></i> </h1>
+      <br>
+      <br>
+      <h4 class="card-title ml-4">Output Excel file was successfully sent to SAP.</h4>
+      <h4 class="card-title ml-4">Please check your file in the SAP system.</h4>
+  
+
+	   <button onclick="goBack()" class="warrning" style="background-color:black; color:white;">Go Back</button>
+   </div>
+</div>
+<br>
+<br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br>
+<!-- <br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br> -->
+
+
+
+<script type="text/javascript">
+
+function goBack() {
+            window.history.back();
+        }
+
+
+</script>
+
+
+
+{% endblock %}
